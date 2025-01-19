@@ -13,11 +13,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,7 +30,6 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
         JsonDeserializer<ClaimStatusUpdateMessage> jsonDeserializer = new JsonDeserializer<>(ClaimStatusUpdateMessage.class);
         jsonDeserializer.addTrustedPackages("*");
-        //return new DefaultKafkaConsumerFactory<>(props);
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), jsonDeserializer);
     }
 
@@ -42,7 +37,7 @@ public class KafkaConsumerConfig {
     public ConcurrentKafkaListenerContainerFactory<String, ClaimStatusUpdateMessage> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, ClaimStatusUpdateMessage> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory());  // Set the custom consumer factory.
+        factory.setConsumerFactory(consumerFactory());
         return factory;
     }
 
@@ -57,6 +52,6 @@ public class KafkaConsumerConfig {
     public void handleLoginUpdate(@RequestBody LoginOtpMessage message) {
         // Example email sending function call
         emailService.sendEmail(message.getEmail(), "Login Update",
-                "You have logged into the portal. If not you kindly contact customer care.");
+                "You have logged into the portal. If not, kindly contact customer care.");
     }
 }

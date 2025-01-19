@@ -23,9 +23,8 @@ public class Claim {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long claimId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId", referencedColumnName = "userId")
-    private User user;
+    @Column(name = "userId")
+    private Long userId;
 
     @Column
     private Date claimDate;

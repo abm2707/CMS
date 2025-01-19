@@ -2,7 +2,7 @@ package com.demo.CMS.Controllers;
 
 import com.demo.CMS.DTOs.UserCredentialsDTO;
 import com.demo.CMS.DTOs.UserDTO;
-import com.demo.CMS.Models.User;
+import com.demo.CMS.Models.Users;
 import com.demo.CMS.Security.JWTHelper;
 import com.demo.CMS.Services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +11,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/user")
@@ -36,7 +38,7 @@ public class UserManagementController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody User user, HttpServletRequest request) {
+    public ResponseEntity<?> registerUser(@RequestBody Users user, HttpServletRequest request) {
         try {
             resp = userService.checkIfUserExists(String.valueOf(user.getUsername()));
             if (!resp) {
@@ -51,8 +53,27 @@ public class UserManagementController {
     }
 
     @GetMapping("/getUser/{userName}")
-    public User getUserDetailsByUserId(@PathVariable String userName){
+    public Optional<Users> getUserDetailsByUserId(@PathVariable String userName){
         return userService.findUserByUserName(userName);
     }
 
+    @PutMapping("/editUser/{userId}")
+    public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody Users updatedUser){
+        try{
+            UserDTO user = userService.updateUser(userId, updatedUser);
+            return ResponseEntity.ok(user);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @DeleteMapping("/delete/{userName}")
+    public ResponseEntity<?> deleteUserByUserName(@PathVariable String userName){
+        try{
+            userService.deleteUserByUserName(userName);
+            return new ResponseEntity<>("Deletion Successful",HttpStatus.OK);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
