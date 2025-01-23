@@ -9,7 +9,7 @@ import java.util.Date;
 
 public class JWTHelper {
 
-    private static final String SECRET = "secret"; // Use a secure key, ideally from environment variables
+    private static final String SECRET = "secret";
     private static final long EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes
 
     public static String generateToken(String username, String issuer) {

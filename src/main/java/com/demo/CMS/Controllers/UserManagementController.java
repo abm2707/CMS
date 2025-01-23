@@ -1,10 +1,13 @@
 package com.demo.CMS.Controllers;
 
+import com.demo.CMS.Config.OTPGenerator;
 import com.demo.CMS.DTOs.UserCredentialsDTO;
 import com.demo.CMS.DTOs.UserDTO;
 import com.demo.CMS.Models.Users;
 import com.demo.CMS.Security.JWTHelper;
+import com.demo.CMS.Services.KafkaNotificationsService;
 import com.demo.CMS.Services.UserService;
+import com.demo.CMS.Utilities.Utilities;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -19,13 +22,27 @@ import java.util.Optional;
 public class UserManagementController {
 
     boolean resp;
+    String generatedOtp;
 
     @Autowired
     UserService userService;
 
+    @Autowired
+    KafkaNotificationsService kafkaNotificationsService;
+
+    @Autowired
+    OTPGenerator otpGenerator;
+
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody UserCredentialsDTO credentials, HttpServletRequest request) {
         UserDTO user = userService.loginUser(credentials.getUsername(), credentials.getPassword());
+
+        // Generate otp.
+        generatedOtp = otpGenerator.generateOTP();
+
+        // Send otp as email
+        kafkaNotificationsService.sendEmailOtp(generatedOtp, credentials.getUsername());
+
         if (user != null) {
             // Create a JWT token.
             String token = JWTHelper.generateToken(user.getUsername(), request.getRequestURL().toString());

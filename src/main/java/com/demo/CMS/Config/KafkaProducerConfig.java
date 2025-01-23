@@ -35,9 +35,9 @@ public class KafkaProducerConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 
-    public void sendOtpMail(@RequestBody LoginOtpMessage loginOtpMessage){
-        // kafkaTemplate().send("topic-name", otpMessage);
-        kafkaTemplate().send("login-otp-topic",loginOtpMessage);
-    }
+//    public void sendOtpMail(@RequestBody LoginOtpMessage loginOtpMessage){
+//        // kafkaTemplate().send("topic-name", otpMessage);
+//        kafkaTemplate().send("login-otp-topic",loginOtpMessage);
+//    }
 
 }

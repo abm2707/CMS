@@ -3,6 +3,7 @@ package com.demo.CMS.Config;
 import com.demo.CMS.DTOs.ClaimStatusUpdateMessage;
 import com.demo.CMS.DTOs.LoginOtpMessage;
 import com.demo.CMS.Services.EmailService;
+import jakarta.mail.MessagingException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
@@ -13,10 +14,12 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import java.util.HashMap;
 import java.util.Map;
 
+@Service
 public class KafkaConsumerConfig {
     @Autowired
     private EmailService emailService;
@@ -41,17 +44,19 @@ public class KafkaConsumerConfig {
         return factory;
     }
 
-    @KafkaListener(topics = "claim-updates", groupId = "group_id")
-    public void handleClaimStatusUpdate(ClaimStatusUpdateMessage message) {
+    @KafkaListener(topics = "claim-status-update", groupId = "group_id")
+    public void handleClaimStatusUpdate(ClaimStatusUpdateMessage message) throws MessagingException {
         // Example email sending function call
-        emailService.sendEmail(message.getUserEmail(), "Claim Status Update",
+        System.out.println("Inside kafka listener !!");
+        emailService.sendEmail(message.getUserEmail(), "claim-status-update",
                 "Your claim #" + message.getClaimId() + " has been updated to: " + message.getNewStatus());
     }
 
-    @KafkaListener(topics = "login-otp-topic", groupId = "group_id")
-    public void handleLoginUpdate(@RequestBody LoginOtpMessage message) {
+    @KafkaListener(topics = "login-otp-config", groupId = "group_id")
+    public void handleLoginUpdate(String subject, String to_email, String emailBody) throws MessagingException {
         // Example email sending function call
-        emailService.sendEmail(message.getEmail(), "Login Update",
-                "You have logged into the portal. If not, kindly contact customer care.");
+        System.out.println("Inside kafka listener");
+        emailService.sendEmail(subject,to_email, emailBody);
     }
+
 }

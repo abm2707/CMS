@@ -1,6 +1,7 @@
 package com.demo.CMS.Controllers;
 
 import com.demo.CMS.DTOs.ClaimReportDTO;
+import com.demo.CMS.Models.ClaimsSummary;
 import com.demo.CMS.Models.ClaimsSummaryDTO;
 import com.demo.CMS.Services.ReportServices;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +29,9 @@ public class ReportControllers {
         }
     }
 
-//    @GetMapping("/claims/summary")
-//    public ResponseEntity<ClaimsSummaryDTO> getClaimsSummary() {
-//        ClaimsSummaryDTO summary = reportServices.generateClaimsSummary();
-//        return ResponseEntity.ok(summary);
-//    }
+    @GetMapping("/claims/summary")
+    public ResponseEntity<ClaimsSummary> getClaimsSummary() {
+        ClaimsSummary summary = reportServices.generateClaimsSummary();
+        return ResponseEntity.ok(summary);
+    }
 }
