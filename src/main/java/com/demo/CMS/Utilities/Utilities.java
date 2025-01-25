@@ -15,11 +15,12 @@ public class Utilities {
     @Autowired
     APEmailsRepository apEmailsRepository;
 
-    public String getEmailBody(Integer template_id, String recipient_email){
+    public String getEmailBody(Integer template_id, String recipient_email, String otp){
         System.out.println("Inside Get Email Method");
         Optional<APEmails> emailData = Optional.ofNullable(apEmailsRepository.findById(1).orElseThrow(() -> new RuntimeException("No Email Body found")));
         if(emailData.isPresent()){
             emailBody = emailData.get().getEmail_body();
+            emailBody = emailBody.replace("#otp",otp);
         }
         return emailBody;
     }

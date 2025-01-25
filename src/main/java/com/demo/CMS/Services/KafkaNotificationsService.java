@@ -36,7 +36,17 @@ public class KafkaNotificationsService {
     public void sendEmailOtp(String otp, String recipient_email){
         // Using the kafka template to send this topic name to listener.
         System.out.println("Inside send Email ot method");
-        String emailBody = utilities.getEmailBody(1,recipient_email);
-        kafkaTemplate.send("login-otp-topic",emailBody,recipient_email);
+
+        String emailBody = utilities.getEmailBody(1,recipient_email,otp);
+
+        // As email body will be in HTML, it must be escaped else json will break.
+        emailBody = emailBody
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("#OTP",otp);
+        String message = "{\"emailBody\": \"" + emailBody + "\", \"recipient_email\": \"" + recipient_email + "\"}";
+        kafkaTemplate.send("login-otp-topic", message);
     }
 }

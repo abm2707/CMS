@@ -3,6 +3,7 @@ package com.demo.CMS.Controllers;
 import com.demo.CMS.Config.OTPGenerator;
 import com.demo.CMS.DTOs.UserCredentialsDTO;
 import com.demo.CMS.DTOs.UserDTO;
+import com.demo.CMS.DTOs.ValidateOTP;
 import com.demo.CMS.Models.Users;
 import com.demo.CMS.Security.JWTHelper;
 import com.demo.CMS.Services.KafkaNotificationsService;
@@ -10,9 +11,13 @@ import com.demo.CMS.Services.UserService;
 import com.demo.CMS.Utilities.Utilities;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -23,6 +28,7 @@ public class UserManagementController {
 
     boolean resp;
     String generatedOtp;
+    UserDTO user;
 
     @Autowired
     UserService userService;
@@ -33,24 +39,45 @@ public class UserManagementController {
     @Autowired
     OTPGenerator otpGenerator;
 
+    @Autowired
+    ValidateOTP validateOTP;
+
+    @Autowired
+    AuthenticationManager authenticationManager;
+
+    @Autowired
+    RedisTemplate redisTemplate;
+
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody UserCredentialsDTO credentials, HttpServletRequest request) {
-        UserDTO user = userService.loginUser(credentials.getUsername(), credentials.getPassword());
+        //user = userService.loginUser(credentials.getUsername(), credentials.getPassword());
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(credentials.getUsername(), credentials.getPassword()));
 
         // Generate otp.
         generatedOtp = otpGenerator.generateOTP();
-
+        redisTemplate.opsForValue().set("generatedOtp",generatedOtp);
         // Send otp as email
         kafkaNotificationsService.sendEmailOtp(generatedOtp, credentials.getUsername());
+        return new ResponseEntity<>(generatedOtp, HttpStatus.OK);
+    }
 
-        if (user != null) {
+    @PostMapping("/validateOtp")
+    public ResponseEntity<?> permitUser(@RequestBody ValidateOTP otpBody, HttpServletRequest request){
+
+        Optional<Users> userObject = userService.findUserByUserName(otpBody.getUserName());
+        redisTemplate.opsForValue().set("Username",userObject.get().getUsername());
+        redisTemplate.opsForValue().set("email",userObject.get().getEmail());
+        redisTemplate.opsForValue().set("userStatus",userObject.get().getStatus());
+
+        if(!otpBody.getEnteredOtp().equalsIgnoreCase(otpBody.getGeneratedOtp())){
+            return new ResponseEntity<>("Invalid OTP Entered", HttpStatus.NOT_ACCEPTABLE);
+        }else {
             // Create a JWT token.
-            String token = JWTHelper.generateToken(user.getUsername(), request.getRequestURL().toString());
+            String token = JWTHelper.generateToken(otpBody.getUserName(), request.getRequestURL().toString());
             // Return the ResponseEntity with status OK, and add the token in the Authorization header
-            return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, "Bearer " + token).body(user);
-        } else {
-            // If the user is not found or the authentication failed, return an unauthorized status
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, "Bearer " + token).body(token);
         }
     }
 

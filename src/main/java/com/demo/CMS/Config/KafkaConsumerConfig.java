@@ -1,11 +1,11 @@
 package com.demo.CMS.Config;
 
 import com.demo.CMS.DTOs.ClaimStatusUpdateMessage;
-import com.demo.CMS.DTOs.LoginOtpMessage;
 import com.demo.CMS.Services.EmailService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
-import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,6 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,11 +51,26 @@ public class KafkaConsumerConfig {
                 "Your claim #" + message.getClaimId() + " has been updated to: " + message.getNewStatus());
     }
 
-    @KafkaListener(topics = "login-otp-config", groupId = "group_id")
-    public void handleLoginUpdate(String subject, String to_email, String emailBody) throws MessagingException {
+    @KafkaListener(topics = "login-otp-topic", groupId = "group_id")
+    public void handleLoginUpdate(String message) throws MessagingException {
         // Example email sending function call
         System.out.println("Inside kafka listener");
-        emailService.sendEmail(subject,to_email, emailBody);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            Map<String, String> data = objectMapper.readValue(message, new TypeReference<Map<String, String>>() {});
+            String emailBody = data.get("emailBody");
+            String recipient_email = data.get("recipient_email");
+
+            System.out.println("Email Body: " + emailBody);
+            System.out.println("Recipient Email: " + recipient_email);
+
+            // Send email
+            emailService.sendEmail("Login OTP", recipient_email, emailBody);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Failed to parse message: " + message);
+        }
     }
 
 }
